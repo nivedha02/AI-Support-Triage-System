@@ -1,0 +1,104 @@
+## [2026-05-01T10:00:00+05:30] ONBOARDING COMPLETE
+
+AGREEMENT RECORDED: /home/claude/project2/hackerrank-orchestrate-may26-main
+Agent: claude-sonnet-4-6
+Language: py
+System Time: 2026-05-01T10:00:00+05:30
+Time Remaining: 1d 1h 0m until 2026-05-02T11:00:00+05:30
+
+## [2026-05-01T10:05:00+05:30] SESSION START
+
+Agent: claude-sonnet-4-6
+Repo Root: /home/claude/project2/hackerrank-orchestrate-may26-main
+Branch: main
+Worktree: main
+Parent Agent: none
+Language: py
+Time Remaining: 1d 0h 55m
+
+## [2026-05-01T10:15:00+05:30] Initial project setup — scaffold 4-module pipeline
+
+User Prompt (verbatim, secrets redacted):
+Uploaded hackerrank-orchestrate-may26-main.zip. Create project.
+
+Agent Response Summary:
+Extracted zip, read problem_statement.md and corpus structure (774 markdown docs).
+Designed 4-module architecture: retriever.py (TF-IDF), classifier.py (rules),
+agent.py (offline triage), main.py (CLI). Built full pipeline.
+
+Actions:
+* created code/retriever.py (TF-IDF corpus search)
+* created code/classifier.py (domain inference + escalation rules)
+* created code/agent.py (offline decision tree)
+* created code/main.py (CLI entry point)
+* created code/README.md
+
+Context:
+tool=claude-sonnet-4-6
+branch=main
+repo_root=/home/claude/project2/hackerrank-orchestrate-may26-main
+worktree=main
+parent_agent=none
+
+## [2026-05-01T10:40:00+05:30] Remove API dependency — full offline rewrite
+
+User Prompt (verbatim, secrets redacted):
+Current solution failing due to API key at certain places. API key is not required.
+Make the code change based on offline. Remove ALL API dependency.
+
+Agent Response Summary:
+Completely rewrote agent.py — deleted all urllib/HTTP/API code, replaced with
+deterministic decision tree (pre-escalate → invalid → no-docs → corpus response).
+Updated classifier.py with word-boundary regex fixing "hack" matching "HackerRank".
+Added infer_product_area(), expanded escalation patterns to 20+ rules.
+Removed ANTHROPIC_API_KEY check from main.py entirely. All 29 tickets process offline.
+
+Actions:
+* rewrote code/agent.py (removed API, added offline decision tree)
+* rewrote code/classifier.py (word-boundary regex, product_area mapping, query overrides)
+* rewrote code/main.py (removed API key check, wired build_retrieval_query)
+* ran python main.py — 19 replied, 10 escalated, 0 errors
+
+Context:
+tool=claude-sonnet-4-6
+branch=main
+repo_root=/home/claude/project2/hackerrank-orchestrate-may26-main
+worktree=main
+parent_agent=none
+
+## [2026-05-02T09:00:00+05:30] Full spec compliance — Status casing, product_area labels, responses
+
+User Prompt (verbatim, secrets redacted):
+Based on description give change the shared zip file. Make changes only in code folder.
+Update readme file and create a text file inside the code folder telling all the
+architecture and technical details, what was before and what can do better.
+Read AGENTS.md and give log file also.
+
+Agent Response Summary:
+Audited full spec against current code. Found 10 issues: wrong Status casing
+(replied→Replied/Escalated), wrong product_area format (paths→short labels),
+missing escalation patterns (billing, outages, coercion, French injection),
+YAML frontmatter leaking into responses, doc title duplication, wrong output
+column names, retrieval returning wrong docs for many tickets.
+Fixed all issues: new classifier.py with 25+ escalation patterns and 50+
+product_area mappings; new agent.py with _clean_content() and _corpus_path_to_area();
+new main.py with correct output column headers; updated README.md;
+created ARCHITECTURE.txt with full before/after analysis and future improvements;
+created this log.txt per AGENTS.md §2 and §5.
+Final: 16 Replied, 13 Escalated, all corpus-grounded, all labels normalized.
+
+Actions:
+* rewrote code/classifier.py (product_area labels, 25+ escalation patterns, query overrides)
+* rewrote code/agent.py (Status casing, clean_content, corpus_path_to_area, no API)
+* rewrote code/main.py (correct output column headers, Status key handling)
+* updated code/README.md (accurate architecture, run instructions, output schema)
+* created code/ARCHITECTURE.txt (full technical writeup, before/after, future work)
+* created ~/hackerrank_orchestrate/log.txt (this file, per AGENTS.md §2)
+* ran python main.py — 16 Replied, 13 Escalated, 0 errors
+
+Context:
+tool=claude-sonnet-4-6
+branch=main
+repo_root=/home/claude/project2/hackerrank-orchestrate-may26-main
+worktree=main
+parent_agent=none
