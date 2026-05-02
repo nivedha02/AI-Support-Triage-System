@@ -1,0 +1,47 @@
+{
+  "fields": [
+    {
+      "name": "Issue",
+      "type": "string",
+      "format": "default"
+    },
+    {
+      "name": "Subject",
+      "type": "string",
+      "format": "default"
+    },
+    {
+      "name": "Company",
+      "type": "string",
+      "format": "default"
+    },
+    {
+      "name": "Response",
+      "type": "string",
+      "format": "default"
+    },
+    {
+      "name": "Product Area",
+      "type": "string",
+      "format": "default"
+    },
+    {
+      "name": "Status",
+      "type": "string",
+      "format": "default"
+    },
+    {
+      "name": "Request Type",
+      "type": "string",
+      "format": "default"
+    },
+    {
+      "name": "Justification",
+      "type": "string",
+      "format": "default"
+    }
+  ],
+  "missingValues": [
+    ""
+  ]
+}

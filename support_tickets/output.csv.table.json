@@ -1,0 +1,76 @@
+{
+  "columns": [
+    {
+      "field": "Issue",
+      "title": "Issue",
+      "width": 3457,
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true
+    },
+    {
+      "field": "Subject",
+      "title": "Subject",
+      "width": 334,
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true
+    },
+    {
+      "field": "Company",
+      "title": "Company",
+      "width": 115,
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true
+    },
+    {
+      "field": "Response",
+      "title": "Response",
+      "width": 6817,
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true
+    },
+    {
+      "field": "Product Area",
+      "title": "Product Area",
+      "width": 147,
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true
+    },
+    {
+      "field": "Status",
+      "title": "Status",
+      "width": 94,
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true
+    },
+    {
+      "field": "Request Type",
+      "title": "Request Type",
+      "width": 139,
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true
+    },
+    {
+      "field": "Justification",
+      "title": "Justification",
+      "width": 1725,
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true
+    }
+  ]
+}
