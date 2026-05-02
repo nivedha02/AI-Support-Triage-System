@@ -1,0 +1,180 @@
+============================================================
+MULTI-DOMAIN SUPPORT TRIAGE AGENT — ARCHITECTURE & DECISIONS
+============================================================
+
+HackerRank Orchestrate Hackathon (May 1–2, 2026)
+Language: Python 3.10+ | Dependencies: stdlib only | Runtime: terminal
+
+------------------------------------------------------------
+1. WHAT WE BUILT
+------------------------------------------------------------
+A fully offline, deterministic support triage agent that:
+- Reads support_tickets.csv (29 tickets across HackerRank, Claude, Visa)
+- Classifies each ticket into domain, product_area, and request_type
+- Applies escalation rules for high-risk cases
+- Retrieves the most relevant corpus document using BM25
+- Generates a grounded, user-facing response
+- Writes output.csv with all 8 required columns
+
+------------------------------------------------------------
+2. ARCHITECTURE — 4 MODULES
+------------------------------------------------------------
+
+main.py
+  Entry point. Reads CSV, calls pipeline per row, writes output.
+  Handles errors gracefully with fallback escalation rows.
+  Output columns match sample_support_tickets.csv exactly:
+    Issue, Subject, Company, Response, Product Area, Status,
+    Request Type, Justification
+
+classifier.py
+  Three responsibilities:
+  a) infer_domain()          — maps company field, then keyword scoring
+  b) infer_product_area()    — short normalized label from domain + keywords
+  c) should_escalate()       — 25+ regex patterns: fraud, injection, coercion,
+                               identity theft, billing, outages, vague tickets
+  d) classify_request_type() — word-boundary regex avoids "hack" matching
+                               "HackerRank"; ordering: invalid > bug >
+                               product_issue > feature_request
+  e) build_retrieval_query() — keyword override map for 20+ ticket patterns
+                               (inactivity→lobby doc, lti→education doc, etc.)
+
+retriever.py
+  BM25-style index over 774 markdown files in data/:
+  - Loads all docs at startup, caches singleton
+  - Tokenizes titles + content, builds bigrams
+  - Scores: BM25 tf-norm + title boost (3× per token, 6× phrase) +
+    product_area path boost + intent boosting + generic doc penalty
+  - Domain-filters results before returning top-K
+
+agent.py
+  Offline decision tree (no LLM, no API):
+  Step 1: Pre-escalate → return Escalated + specific justification
+  Step 2: Invalid type → return Replied + "out of scope" message
+  Step 3: No corpus docs → return Escalated
+  Step 4: Build grounded response from top retrieved doc
+    - Strip YAML frontmatter, metadata, _Last updated_ lines
+    - Remove duplicate title line
+    - Cap at 1000 chars
+    - Derive product_area from corpus folder path (_corpus_path_to_area)
+  Returns: Status ("Replied"/"Escalated"), product_area, response,
+           justification, Request Type
+
+------------------------------------------------------------
+3. WHAT WAS THERE BEFORE (v1 problems)
+------------------------------------------------------------
+
+Problem 1 — API dependency
+  Old code called Anthropic API (urllib to api.anthropic.com).
+  Required ANTHROPIC_API_KEY. Fell back to escalation on credit error.
+  FIX: Deleted all API/HTTP code. agent.py is now pure rule+template.
+
+Problem 2 — Wrong Status casing
+  Old code output: "replied" / "escalated" (lowercase)
+  Spec requires: "Replied" / "Escalated" (capital R/E)
+  FIX: All status values now use correct casing.
+
+Problem 3 — Wrong product_area format
+  Old code output: "hackerrank/support", "claude/support", "visa/support"
+  Spec requires short labels like "assessments", "fraud", "account_access"
+  FIX: Added _corpus_path_to_area() mapping + infer_product_area() with
+       50+ prefix→label mappings derived from the actual corpus folder structure.
+
+Problem 4 — Substring bug: "hack" matching "HackerRank"
+  Old classify_request_type() used plain string `in` which matched
+  "hack" inside "HackerRank", marking legitimate tickets as "invalid".
+  FIX: Replaced with re.search(r"\bhack\b") word-boundary regex.
+
+Problem 5 — Over-escalation / under-escalation
+  Old code escalated only a narrow set of patterns.
+  Missed: billing/payment (HackerRank), sitewide outages, non-admin
+  workspace restore, score manipulation (partial), prompt injection (French).
+  FIX: Expanded to 25+ patterns covering all spec escalation categories.
+
+Problem 6 — Responses contained raw YAML frontmatter
+  Old content extractor left title:/source_url:/last_updated: lines
+  and _Last updated: Mar 6, 2026_ inline metadata visible in response.
+  FIX: Added skip_prefixes list and skip_re regex in _clean_content().
+
+Problem 7 — Doc title duplicated in response
+  First line after stripping was often the H1 title of the doc,
+  identical to the article title shown in parentheses.
+  FIX: Added title deduplication step in _build_grounded_response().
+
+Problem 8 — product_area not derived from retrieved doc
+  Old code used a static string like "hackerrank/support" for all HR tickets.
+  FIX: agent.py calls _corpus_path_to_area(top_doc["product_area"]) to
+       derive the label from the actual retrieved corpus path.
+
+Problem 9 — Retrieval query quality
+  Old code used Counter(filtered_words) without targeted overrides.
+  Many tickets retrieved wrong documents (e.g. inactivity → report settings).
+  FIX: Added QUERY_OVERRIDES map with 20+ targeted keyword→query mappings.
+
+Problem 10 — Wrong output columns
+  Old code used lowercase column names (issue, subject, etc.)
+  Spec and sample output use: Issue, Subject, Company, Response,
+  Product Area, Status, Request Type, Justification (with spaces/caps).
+  FIX: OUTPUT_COLUMNS in main.py now matches sample exactly.
+
+------------------------------------------------------------
+4. WHAT CAN BE IMPROVED (FUTURE WORK)
+------------------------------------------------------------
+
+A. Semantic retrieval (embedding-based)
+  Current BM25 misses paraphrases. Embedding search (e.g. sentence-transformers
+  all-MiniLM-L6-v2) would better match "inactivity timeout" → lobby doc.
+  Tradeoff: adds a ~80MB model dependency vs current zero-dep stdlib.
+
+B. LLM-generated responses
+  Current responses are corpus excerpts. An LLM call with retrieved context
+  would produce more natural, synthesised answers. We intentionally avoided
+  this to: (a) remove API dependency, (b) guarantee no hallucination,
+  (c) allow 100% offline operation per spec requirements.
+
+C. Multi-intent detection
+  Some tickets have 2 unrelated requests. Current pipeline handles only the
+  primary intent. Could split into sub-tickets and process each separately.
+
+D. Confidence calibration
+  BM25 scores are unnormalised. A proper confidence threshold (e.g. cosine
+  similarity ≥ 0.7) would better determine when to escalate for "missing
+  knowledge" vs reply with weak match.
+
+E. Fine-grained product_area
+  Some area mappings are still coarse (e.g. all screen/* maps to "assessments").
+  Sub-categories like "test_integrity", "test_invitations" would improve scoring.
+
+F. Language detection
+  Ticket 25 is in French (prompt injection). We detect it via regex but a
+  language detection library (langdetect) would enable proper multilingual routing.
+
+G. AGENTS.md log automation
+  Per AGENTS.md §5, every turn should append a structured log entry.
+  Currently the log is manually maintained. A wrapper could auto-append entries.
+
+------------------------------------------------------------
+5. TECH CHOICES RATIONALE
+------------------------------------------------------------
+
+Python stdlib only     → Zero pip installs, runs anywhere Python 3.10+ exists
+BM25 over TF-IDF       → Better document length normalisation, standard IR technique
+Regex escalation rules → Deterministic, auditable, no false negatives from ML
+Word-boundary regex    → Prevents substring false positives (hack vs HackerRank)
+Keyword overrides      → Targeted retrieval for known ticket patterns
+Corpus-derived areas   → product_area comes from actual doc paths, not guessed
+temperature=0 approach → Conceptually: same input → same output every run
+
+------------------------------------------------------------
+6. FINAL STATS
+------------------------------------------------------------
+
+Corpus:         774 markdown documents (hackerrank + claude + visa)
+Tickets:        29
+Replied:        16
+Escalated:      13
+Runtime:        < 1 second (BM25 index built once at startup)
+API calls:      0
+Network calls:  0
+Pip packages:   0
+
